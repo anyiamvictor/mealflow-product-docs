@@ -116,7 +116,7 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 | Role | Description |
 |---|---|
 | Restaurant Admin | Registers restaurant, manages menus, views order aggregations, sends invite links |
-| Company Admin (Owner) | Registers via restaurant invite, manages company members, approves/rejects members |
+| Company Admin (Owner) | Registers company and links to a restaurant via restaurant invite, manages company members, approves/rejects members |
 | Company Admin | Elevated member with management access, set by owner |
 | Company Member | Registers via member invite code, places daily meal orders |
 
