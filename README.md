@@ -1,6 +1,8 @@
 # MealFlow — Product Documentation
 
-> **Status:** MVP live, no paying users · **Stage:** Early · **Geography:** Africa · **Team:** Solo founder
+> **Status:** MVP live, no paying users · **Stage:** Early · **Geography:** Africa · **Team:** Solo founder  
+> **Built in:** Under 2 months · **Stack:** React + Firebase (MERN migration planned)  
+> **Note:** Built by a solo founder-PM using AI-assisted development — reflecting how modern product builders ship fast without sacrificing intentional product thinking.
 
 ---
 
@@ -89,12 +91,12 @@ MealFlow is a two-sided B2B SaaS platform that connects restaurants and corporat
 
 1. A restaurant registers on MealFlow and creates their profile.
 2. A company registers on MealFlow and creates their profile.
-4. A company admin connects to a restaurant via a link created by Restaurant admin and is automatically linked to the restaurant.
-3. The restaurant creates a menu for a specific company and date, sets a cutoff time, and sends menu to company for approval 
-5. The admin invites employees via a unique member code.
+3. A company admin connects to a restaurant using a restaurant-generated invite link, automatically linking both parties.
+4. The restaurant creates a menu for a specific company and date, sets a cutoff time, and submits it to the company for approval.
+5. Once approved, the admin invites employees via a unique member invite code.
 6. Members register, get approved by the admin, and can place their daily meal order before the cutoff.
 7. After the cutoff, the restaurant sees a full, structured breakdown of all orders — total counts per dish, per protein, per side — with individual member names.
-8. Members who have not ordered by cutoff are auto-assigned their default meal (This is set by the company admin and toggling off will deactivate auto assign feature.
+8. Members who have not ordered by cutoff are auto-assigned their default meal (if the feature is enabled by the company admin).
 
 ### Value Proposition
 
@@ -110,22 +112,22 @@ MealFlow is a two-sided B2B SaaS platform that connects restaurants and corporat
 
 ### 4.1 Scope — MVP
 
-The MVP covers the core loop: restaurant creates menu → company members order → restaurant sees aggregated output.
+The MVP covers the core loop: restaurant creates menu → company admin approves → company members order → restaurant sees aggregated output.
 
 ### 4.2 User Roles
 
 | Role | Description |
 |---|---|
-| Restaurant Admin | Registers restaurant, manages menus, views order aggregations, sends invite links |
-| Company Admin (Owner) | Registers company and links to a restaurant via restaurant invite, manages company members, approves/rejects members |
-| Company Admin | Elevated member with management access, set by owner |
+| Restaurant Admin | Registers restaurant, manages menus, views order aggregations, generates invite links |
+| Company Admin (Owner) | Registers company, links to restaurant via invite, manages members, approves/rejects requests |
+| Company Admin | Elevated member with management access, promoted by owner |
 | Company Member | Registers via member invite code, places daily meal orders |
 
 ### 4.3 Core Features — MVP
 
 #### Authentication & Onboarding
 - Email/password registration with role assignment at signup
-- Restaurant invite link flow — company admin linked on using restaurant invite link
+- Restaurant invite link flow — company auto-linked on registration
 - Member invite code flow — member starts as `pending` until approved by admin
 - Custom claims via Firebase Auth for role-based access control
 
@@ -134,19 +136,19 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 - Menu items support: fixed protein, protein choice, side choice, swallow choice
 - Cutoff time set per menu (`HH:mm` string)
 - Menu status flow: `draft → pending → active`
+- Edit flow: `active → editRequested → editing → pending → active`
 - Auto-reject scheduler: menus still pending after cutoff are auto-rejected every 15 minutes
 
 #### Member Management
 - Company admin approves or rejects pending members
 - Bulk approve (selected or all pending)
 - Admin promotion/demotion (owner only)
-- Member suspension and reactivation (company admins)
-- Member suspension
+- Member suspension and reactivation
 - Member removal
 
 #### Order Management
 - Member selects meal item + optional protein/side/swallow before cutoff
-- Auto-assignment after cutoff for members who have not ordered (if feature is enabled by company admin)
+- Auto-assignment after cutoff for members who have not ordered (toggleable by company admin)
 - Order cancellation on link deactivation or member removal
 - Absence marking — admin can mark a member absent, suppressing auto-assign
 
@@ -155,21 +157,35 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 - Per-combo breakdown with member names (e.g. Jollof + Chicken + Salad: 10 — Ada, Emeka…)
 
 #### Notifications
-- Email notifications via Gmail/Nodemailer for key events: menu submitted, menu approved, member approved, menu rejected
-- In-app FCM push notifications (Firestore `notifications` collection)
+- Email notifications via Gmail/Nodemailer: menu submitted, menu approved, member approved, menu rejected
+- In-app FCM push notifications with notification centre UI
 
 #### Feedback
 - Members and admins can submit feedback via in-app form
 - `sendFeedback` Cloud Function stores submissions
 
+#### Order History
+- Members and admins can view past orders with full detail
+
+#### Absence Management
+- Admin marks members absent per day, suppressing auto-assignment
+- Full absence management UI
+
+#### Ratings
+- Members can rate meals within a defined rating window
+- Backend and UI complete
+
+#### Invite Code Management
+- Shareable invite code UI with one-tap copy and live countdown timer showing expiry
+
 ### 4.4 Non-Functional Requirements
 
 | Requirement | Detail |
 |---|---|
-| Platform | Web (React + Vite), mobile-ready layout architecture |
+| Platform | Web (React + Vite), dual-layout architecture (mobile + web) |
 | Backend | Firebase Cloud Functions (callable), Firestore |
 | Auth | Firebase Auth with custom claims |
-| Hosting | Firebase Hosting, CI/CD via GitHub Actions |
+| Hosting | Firebase Hosting, CI/CD via GitHub Actions (auto-deploy on push to main) |
 | Performance | Page loads under 3s on mid-range Android on 4G |
 | Security | Role-based Firestore security rules using custom claims |
 | Scalability | Flat Firestore schema designed for future MERN migration |
@@ -177,11 +193,11 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 ### 4.5 Out of Scope — MVP
 
 - In-app payments
-- Multi-restaurant per company
 - Native mobile app (Capacitor planned post-MVP)
 - White-label theming per company/restaurant
 - Self-serve subscription billing
 - Analytics dashboard
+- Export/print prep list
 
 ---
 
@@ -193,13 +209,13 @@ This section documents key technical decisions and the product reasoning behind 
 
 **Decision:** `menuItems`, `orders`, `ratings`, `companyMembers` are stored as top-level Firestore collections rather than nested subcollections under their parent documents.
 
-**Reasoning:** A flat schema allows direct querying across entities without requiring knowledge of the parent document path. More importantly, it mirrors how a relational/document database like MongoDB structures data. When MealFlow migrates from Firebase to a MERN stack at scale, the data model translates directly — no restructuring required. This was a deliberate forward-compatibility decision made at schema design, not an afterthought.
+**Reasoning:** A flat schema allows direct querying across entities without requiring knowledge of the parent document path. More importantly, it mirrors how a document database like MongoDB structures data. When MealFlow migrates from Firebase to a MERN stack at scale, the data model translates directly — no restructuring required. This was a deliberate forward-compatibility decision made at schema design, not an afterthought.
 
 ### 5.2 React + Firebase for MVP, MERN at Scale
 
 **Decision:** Build the MVP on React + Firebase (Auth, Firestore, Cloud Functions, Hosting). Plan to migrate the backend to Node.js + Express + MongoDB at scale.
 
-**Reasoning:** Firebase eliminates infrastructure overhead for a solo founder at MVP stage — no server provisioning, no DevOps, built-in auth, real-time data. The tradeoff is cost at scale and limited query flexibility. MongoDB was chosen as the target database (over PostgreSQL) because the document model fits MealFlow's data naturally — a menu item is a document with nested options, an order is a document with nested selections. The MERN migration is planned for when MealFlow reaches a scale where Firebase costs become significant or query requirements outgrow Firestore's capabilities.
+**Reasoning:** Firebase eliminates infrastructure overhead for a solo founder at MVP stage — no server provisioning, no DevOps, built-in auth, real-time data. The tradeoff is cost at scale and limited query flexibility. MongoDB was chosen as the target database (over PostgreSQL) because the document model fits MealFlow's data naturally — a menu item is a document with nested options, an order is a document with nested selections. The MERN migration is planned for when Firebase costs become significant or query requirements outgrow Firestore's capabilities.
 
 ### 5.3 Custom Claims for Role-Based Access Control
 
@@ -211,51 +227,58 @@ This section documents key technical decisions and the product reasoning behind 
 
 **Decision:** Separate `MobileLayout` and `WebLayout` components switched by `AppShell` based on platform detection.
 
-**Reasoning:** MealFlow targets African markets where a significant portion of corporate users will access the product on mobile. Rather than a single responsive layout that compromises on both, the dual-layout architecture allows each surface to be designed specifically for its context. The mobile layout will eventually be packaged as a native app via Capacitor.
+**Reasoning:** MealFlow targets African markets where a significant portion of corporate users will access the product on mobile. Rather than a single responsive layout that compromises on both, the dual-layout architecture allows each surface to be optimised for its context. The mobile layout will eventually be packaged as a native app via Capacitor.
 
 ### 5.5 White-Label Theming (Planned)
 
 **Decision:** All UI colors and design tokens are defined as CSS custom properties (`--mf-color-*`, `--mf-shadow-*`, `--mf-radius-*`) at the `:root` level.
 
-**Reasoning:** This is groundwork for a planned white-label theming feature where restaurant or company clients on paid tiers can apply their own brand colors. Overriding a set of CSS variables per tenant is significantly simpler than maintaining per-tenant stylesheets. The theming system is designed now so it does not require a UI refactor when the feature ships.
+**Reasoning:** This is groundwork for a planned white-label theming feature where restaurant or company clients on paid tiers can apply their own brand colors. Overriding CSS variables per tenant is significantly simpler than maintaining per-tenant stylesheets. The system is designed now so it does not require a UI refactor when the feature ships.
+
+### 5.6 AI-Assisted Development
+
+**Decision:** Development was carried out using AI coding assistance throughout the build.
+
+**Reasoning:** As a solo founder-PM building a full-stack product, AI assistance enabled a complete MVP — backend, frontend, CI/CD, and documentation — to be shipped in under two months. This is a deliberate methodology choice, not a workaround. The product decisions, architecture, feature prioritisation, and tradeoffs documented here were made by the founder. AI was the implementation accelerator.
 
 ---
 
 ## 6. Product Roadmap
 
-### Phase 1 — MVP Hardening (Current)
+### Phase 1 — MVP (Complete)
 - [x] Full Cloud Functions backend (auth, menus, orders, members, ratings, notifications)
 - [x] React frontend — restaurant and company portals
-- [x] GitHub Actions CI/CD
+- [x] Dual layout architecture (mobile + web)
+- [x] GitHub Actions CI/CD — auto-deploy on push to main
 - [x] Email notifications via Gmail/Nodemailer
 - [x] Auto-reject scheduler for expired pending menus
 - [x] Firestore security rules
+- [x] In-app FCM notifications with notification centre UI
+- [x] Order history — members and admins
+- [x] Ratings and feedback — backend and UI
+- [x] Absence management — backend and UI
+- [x] Invite code UI with copy button and live countdown timer
+- [x] Multi-restaurant per company (company can link to more than one vendor)
+
+### Phase 2 — Hardening & Launch (Current)
 - [ ] End-to-end QA across all user flows
+- [ ] Export / print prep list for restaurant (PDF or CSV)
+- [ ] Analytics dashboard (order trends, popular items, member activity)
 - [ ] Soft launch with 1–2 pilot clients (Resswell Catering as first restaurant)
 
-### Phase 2 — Growth Features (3–6 months post-launch)
-- [ ] In-app notifications (FCM, notification centre UI)
-- [ ] Order history for members and admins
-- [ ] Ratings and feedback UI (backend complete)
-- [ ] Absence management UI (backend complete)
-- [ ] Export / print prep list for restaurant (PDF or CSV)
-- [ ] Invite code UI with copy button and live countdown timer
-- [ ] Analytics dashboard (order trends, popular items, member activity)
-
-### Phase 3 — Monetisation (6–12 months)
+### Phase 3 — Monetisation (6–12 months post-launch)
 - [ ] Subscription tiers (Free / Growth / Pro)
-- [ ] Self-serve billing (Paystack integration for African market)
+- [ ] Self-serve billing via Paystack (African market)
 - [ ] White-label theming — restaurant and company brand colors on paid tiers
-- [ ] Multi-restaurant per company (company links to more than one vendor)
 
 ### Phase 4 — Scale (12–24 months)
 - [ ] Native mobile app via Capacitor (iOS + Google Play)
 - [ ] MERN stack migration (Node.js + Express + MongoDB) — Firebase backend retired
-- [ ] Multi-country expansion beyond Nigeria (Ghana, Kenya, South Africa)
+- [ ] Multi-country expansion (Ghana, Kenya, South Africa)
 - [ ] Enterprise tier — SSO, advanced analytics, dedicated support
 - [ ] Marketplace model — restaurants discoverable by companies without a direct invite
 
 ---
 
-*Document authored by Victor Anyiam — Founder, PM & Solo Developer, MealFlow*
+*Document authored by Victor Anyiam — Founder, PM & Solo Developer, MealFlow*  
 *Last updated: June 2026*
