@@ -88,12 +88,13 @@ MealFlow is a two-sided B2B SaaS platform that connects restaurants and corporat
 ### How it Works
 
 1. A restaurant registers on MealFlow and creates their profile.
-2. The restaurant creates a menu for a specific company and date, sets a cutoff time, and sends an invite link to the company.
-3. A company admin registers via that invite link and is automatically linked to the restaurant.
-4. The admin invites employees via a unique member code.
-5. Members register, get approved by the admin, and can place their daily meal order before the cutoff.
-6. After the cutoff, the restaurant sees a full, structured breakdown of all orders — total counts per dish, per protein, per side — with individual member names.
-7. Members who have not ordered by cutoff are auto-assigned their default meal.
+2. A company registers on MealFlow and creates their profile.
+4. A company admin connects to a restaurant via a link created by Restaurant admin and is automatically linked to the restaurant.
+3. The restaurant creates a menu for a specific company and date, sets a cutoff time, and sends menu to company for approval 
+5. The admin invites employees via a unique member code.
+6. Members register, get approved by the admin, and can place their daily meal order before the cutoff.
+7. After the cutoff, the restaurant sees a full, structured breakdown of all orders — total counts per dish, per protein, per side — with individual member names.
+8. Members who have not ordered by cutoff are auto-assigned their default meal (This is set by the company admin and toggling off will deactivate auto assign feature.
 
 ### Value Proposition
 
@@ -124,7 +125,7 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 
 #### Authentication & Onboarding
 - Email/password registration with role assignment at signup
-- Restaurant invite link flow — company admin auto-linked on registration
+- Restaurant invite link flow — company admin linked on using restaurant invite link
 - Member invite code flow — member starts as `pending` until approved by admin
 - Custom claims via Firebase Auth for role-based access control
 
@@ -133,19 +134,19 @@ The MVP covers the core loop: restaurant creates menu → company members order 
 - Menu items support: fixed protein, protein choice, side choice, swallow choice
 - Cutoff time set per menu (`HH:mm` string)
 - Menu status flow: `draft → pending → active`
-- Edit flow: `active → editRequested → editing → pending → active`
 - Auto-reject scheduler: menus still pending after cutoff are auto-rejected every 15 minutes
 
 #### Member Management
 - Company admin approves or rejects pending members
 - Bulk approve (selected or all pending)
 - Admin promotion/demotion (owner only)
-- Member suspension and reactivation
+- Member suspension and reactivation (company admins)
+- Member suspension
 - Member removal
 
 #### Order Management
 - Member selects meal item + optional protein/side/swallow before cutoff
-- Auto-assignment after cutoff for members who have not ordered
+- Auto-assignment after cutoff for members who have not ordered (if feature is enabled by company admin)
 - Order cancellation on link deactivation or member removal
 - Absence marking — admin can mark a member absent, suppressing auto-assign
 
