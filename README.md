@@ -2,9 +2,9 @@
 
 > **Status:** MVP live, no paying users · **Stage:** Early · **Geography:** Africa · **Team:** Solo founder  
 > **Built in:** Under 2 months · **Stack:** React + Firebase (MERN migration planned)  
-> **Note:** Built by a solo founder-PM using AI-assisted development — reflecting how modern product builders ship fast without sacrificing intentional product thinking.
+> **Note:** Built by a solo founder-PM using AI-assisted development.
+> **Live** at: mealflow-303d8.web.app
 
----
 
 ## Table of Contents
 
